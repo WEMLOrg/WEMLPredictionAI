@@ -3,11 +3,24 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+from flask_cors import CORS
+
+
 base_dir = Path(__file__).parent
 model_path = base_dir / "wemlAi.joblib"
 model = joblib.load(model_path)
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "https://localhost:7176"}})
+@app.route('/search_symptoms', methods=['GET'])
+def search_symptoms():
+
+    query = request.args.get('term', '').lower()
+    if not query:
+        return jsonify([])
+
+    matching_symptoms = [feature for feature in model.feature_names_in_ if query in feature.lower()]
+    return jsonify(matching_symptoms[:10])
 
 @app.route('/predict', methods=['POST'])
 def predict():
